@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"fmt"
 	"io"
 	"log"
@@ -9,6 +10,8 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/vbauerster/mpb"
 	"github.com/vbauerster/mpb/decor"
 )
@@ -26,17 +29,51 @@ const (
 )
 
 var (
-	downloadList []string
+	downloadList    []string
+	dbAdapter       string
+	dbConnectionURL string
 )
+
+func init() {
+	dbAdapter = "postgres"
+	dbConnectionURL = "host=127.0.0.1 port=5433 user=postgres dbname=imdb sslmode=disable password=admin"
+}
 
 func main() {
 	fmt.Printf("Hello, world.\n")
+
+	// TODO : use flag
 	// downloadFiles()
-	decompressFile(NameFile)
+
+	// TODO : use flag
+	// decompressFile(NameFile)
+	// decompressFile(TitleAkasFile)
+	// decompressFile(TitleBasicsFile)
+	// decompressFile(TitleCrewFile)
+	// decompressFile(TitleEpisodeFile)
+	// decompressFile(TitlePrincipalsFile)
+	// decompressFile(TileRatingsFile)
+
+	// TODO :  remove gz file
+
+	// import data to database
+	db, err := gorm.Open(dbAdapter, dbConnectionURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	db.Exec("")
+
 }
 
 func decompressFile(name string) {
 	fmt.Println(name)
+	filepath := filepath.Base(name)
+	handle, err := UnpackGzipFile(filepath)
+	if err != nil {
+		fmt.Println("[ERROR] Unzip file:", err)
+	}
+	fmt.Println(handle)
+
 }
 
 func downloadFiles() {
@@ -111,4 +148,41 @@ func download(wg *sync.WaitGroup, p *mpb.Progress, name, url string) {
 	if err != nil {
 		log.Printf("%s: %v", name, err)
 	}
+}
+
+func UnpackGzipFile(gzFilePath string) (int64, error) {
+
+	dstFilePath := gzFilePath[0 : len(gzFilePath)-3]
+	gzFile, err := os.Open(gzFilePath)
+	if err != nil {
+		return 0, fmt.Errorf("Failed to open file %s for unpack: %s", gzFilePath, err)
+	}
+	dstFile, err := os.OpenFile(dstFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+	if err != nil {
+		return 0, fmt.Errorf("Failed to create destination file %s for unpack: %s", dstFilePath, err)
+	}
+
+	ioReader, ioWriter := io.Pipe()
+
+	go func() { // goroutine leak is possible here
+		gzReader, _ := gzip.NewReader(gzFile)
+		// it is important to close the writer or reading from the other end of the
+		// pipe or io.copy() will never finish
+		defer func() {
+			gzFile.Close()
+			gzReader.Close()
+			ioWriter.Close()
+		}()
+
+		io.Copy(ioWriter, gzReader)
+	}()
+
+	written, err := io.Copy(dstFile, ioReader)
+	if err != nil {
+		return 0, err // goroutine leak is possible here
+	}
+	ioReader.Close()
+	dstFile.Close()
+
+	return written, nil
 }
