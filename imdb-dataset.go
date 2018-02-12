@@ -77,11 +77,26 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer db.Close()
+		lib.ImportName(filepath.Join(os.TempDir(), NameFile+".tsv"), dbConnectionURL)
 
-		lib.ImportName(filepath.Join(os.TempDir(), NameFile+".tsv"), db)
+		// createNameTable := `CREATE TABLE public.name
+		// 	(
+		// 		nconst text COLLATE pg_catalog."default" NOT NULL,
+		// 		primaryName text COLLATE pg_catalog."default",
+		// 		birthYear text COLLATE pg_catalog."default",
+		// 		deathYear text COLLATE pg_catalog."default",
+		// 		primaryProfession text COLLATE pg_catalog."default",
+		// 		knownForTitles text COLLATE pg_catalog."default"
+		// 	)`
+
+		// db.Exec(createNameTable)
+		// db.Exec("COPY name FROM 'C:/Users/Raj/AppData/Local/Temp/name.basics.tsv' DELIMITER E'\t';")
+
 	}
 
 	fmt.Println("tail:", flag.Args())
+
 	for i, arg := range flag.Args() {
 		// print index and value
 		fmt.Println("item", i, "is", arg)
@@ -102,6 +117,6 @@ func main() {
 	// 	)`
 
 	// db.Exec(createNameTable)
-	// db.Exec("COPY name	 FROM 'E:/Projects/gopath/src/github.com/raj/imdb-dataset-importer/name.basics.tsv' DELIMITER E'\t';")
+	// db.Exec("COPY name FROM 'E:/Projects/gopath/src/github.com/raj/imdb-dataset-importer/name.basics.tsv' DELIMITER E'\t';")
 
 }

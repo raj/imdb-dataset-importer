@@ -9,3 +9,5 @@ type Name struct {
 	PrimaryProfession string
 	KnownForTitles    string
 }
+
+// nconst  primaryName     birthYear       deathYear       primaryProfession       knownForTitles

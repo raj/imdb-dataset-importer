@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-
 	"github.com/vbauerster/mpb"
 	"github.com/vbauerster/mpb/decor"
 )
