@@ -4,11 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/julienschmidt/httprouter"
 	"github.com/raj/imdb-dataset-importer/lib"
 )
 
@@ -21,7 +23,7 @@ const (
 	TitleCrewFile       = "title.crew"
 	TitleEpisodeFile    = "title.episode"
 	TitlePrincipalsFile = "title.principals"
-	TileRatingsFile     = "title.ratings"
+	TitleRatingsFile    = "title.ratings"
 )
 
 var (
@@ -40,6 +42,7 @@ func main() {
 
 	downloadAction := flag.Bool("d", false, "download all files from aws dataset.")
 	importAction := flag.Bool("i", false, "import files to database.")
+	apiAction := flag.Bool("api", false, "provide api.")
 
 	flag.Parse()
 
@@ -54,7 +57,7 @@ func main() {
 		downloadList[3] = MainURL + TitleCrewFile + extension
 		downloadList[4] = MainURL + TitleEpisodeFile + extension
 		downloadList[5] = MainURL + TitlePrincipalsFile + extension
-		downloadList[6] = MainURL + TileRatingsFile + extension
+		downloadList[6] = MainURL + TitleRatingsFile + extension
 		// TODO : use flag
 		lib.DownloadFiles(os.TempDir(), downloadList)
 
@@ -65,34 +68,40 @@ func main() {
 		lib.DecompressFile(os.TempDir(), TitleCrewFile, extension)
 		lib.DecompressFile(os.TempDir(), TitleEpisodeFile, extension)
 		lib.DecompressFile(os.TempDir(), TitlePrincipalsFile, extension)
-		lib.DecompressFile(os.TempDir(), TileRatingsFile, extension)
+		lib.DecompressFile(os.TempDir(), TitleRatingsFile, extension)
 
 	}
 
 	if *importAction {
-		fmt.Printf("import Files to Database\n")
+		fmt.Printf("import Files to Database")
 
-		// import data to database
+		// lib.ImportName(filepath.Join(os.TempDir(), NameFile+".tsv"), dbConnectionURL)
+		// lib.ImportTitleAkas(filepath.Join(os.TempDir(), TitleAkasFile+".tsv"), dbConnectionURL)
+		// lib.ImportTitleBasics(filepath.Join(os.TempDir(), TitleBasicsFile+".tsv"), dbConnectionURL)
+		// lib.ImportTitleCrew(filepath.Join(os.TempDir(), TitleCrewFile+".tsv"), dbConnectionURL)
+		// lib.ImportTitlePrincipals(filepath.Join(os.TempDir(), TitlePrincipalsFile+".tsv"), dbConnectionURL)
+		// lib.ImportTitleRatings(filepath.Join(os.TempDir(), TitleRatingsFile+".tsv"), dbConnectionURL)
+		lib.ImportTitleEpisodes(filepath.Join(os.TempDir(), TitleEpisodeFile+".tsv"), dbConnectionURL)
+
+	}
+
+	if *apiAction {
+		fmt.Printf("api")
+		fmt.Printf("API\n ")
+
 		db, err := gorm.Open(dbAdapter, dbConnectionURL)
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer db.Close()
-		lib.ImportName(filepath.Join(os.TempDir(), NameFile+".tsv"), dbConnectionURL)
 
-		// createNameTable := `CREATE TABLE public.name
-		// 	(
-		// 		nconst text COLLATE pg_catalog."default" NOT NULL,
-		// 		primaryName text COLLATE pg_catalog."default",
-		// 		birthYear text COLLATE pg_catalog."default",
-		// 		deathYear text COLLATE pg_catalog."default",
-		// 		primaryProfession text COLLATE pg_catalog."default",
-		// 		knownForTitles text COLLATE pg_catalog."default"
-		// 	)`
+		r := httprouter.New()
+		// Get a MainController instance
+		uc := lib.NewMainController(db)
 
-		// db.Exec(createNameTable)
-		// db.Exec("COPY name FROM 'C:/Users/Raj/AppData/Local/Temp/name.basics.tsv' DELIMITER E'\t';")
+		// Get main resource
+		r.GET("/", uc.GetMain)
 
+		http.ListenAndServe("0.0.0.0:3000", r)
 	}
 
 	fmt.Println("tail:", flag.Args())
@@ -103,20 +112,5 @@ func main() {
 	}
 
 	// TODO :  remove gz file
-
-	// db.AutoMigrate(&models.Name{})
-
-	// createNameTable := `CREATE TABLE public.name
-	// 	(
-	// 		nconst text COLLATE pg_catalog."default" NOT NULL,
-	// 		primaryName text COLLATE pg_catalog."default",
-	// 		birthYear text COLLATE pg_catalog."default",
-	// 		deathYear text COLLATE pg_catalog."default",
-	// 		primaryProfession text COLLATE pg_catalog."default",
-	// 		knownForTitles text COLLATE pg_catalog."default"
-	// 	)`
-
-	// db.Exec(createNameTable)
-	// db.Exec("COPY name FROM 'E:/Projects/gopath/src/github.com/raj/imdb-dataset-importer/name.basics.tsv' DELIMITER E'\t';")
 
 }
