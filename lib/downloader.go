@@ -14,9 +14,9 @@ import (
 	"github.com/vbauerster/mpb/decor"
 )
 
-func DecompressFile(name string) {
-	fmt.Println(name)
-	filepath := filepath.Base(name)
+func DecompressFile(tmpDir string, name string, extension string) {
+
+	filepath := filepath.Join(tmpDir, name+extension)
 	handle, err := unpackGzipFile(filepath)
 	if err != nil {
 		fmt.Println("[ERROR] Unzip file:", err)
@@ -25,7 +25,7 @@ func DecompressFile(name string) {
 
 }
 
-func DownloadFiles(downloadList []string) {
+func DownloadFiles(tmpDir string, downloadList []string) {
 	// fmt.Println(downloadList)
 
 	var wg sync.WaitGroup
@@ -35,7 +35,7 @@ func DownloadFiles(downloadList []string) {
 	for _, item := range downloadList {
 		url := item
 		wg.Add(1)
-		go download(&wg, p, item, url)
+		go download(&wg, p, item, tmpDir, url)
 	}
 
 	p.Stop()
@@ -43,7 +43,7 @@ func DownloadFiles(downloadList []string) {
 }
 
 // code from https://github.com/vbauerster/mpb/blob/master/examples/io/multiple/main.go
-func download(wg *sync.WaitGroup, p *mpb.Progress, name, url string) {
+func download(wg *sync.WaitGroup, p *mpb.Progress, name, tmpDir string, url string) {
 	defer wg.Done()
 	resp, err := http.Get(url)
 	if err != nil {
@@ -62,7 +62,7 @@ func download(wg *sync.WaitGroup, p *mpb.Progress, name, url string) {
 
 	// create dest
 	destName := filepath.Base(url)
-	dest, err := os.Create(destName)
+	dest, err := os.Create(filepath.Join(tmpDir, destName))
 	if err != nil {
 		err = fmt.Errorf("Can't create %s: %v", destName, err)
 		log.Printf("%s: %v", name, err)
@@ -124,6 +124,7 @@ func unpackGzipFile(gzFilePath string) (int64, error) {
 	}
 	ioReader.Close()
 	dstFile.Close()
+	//TODO : remove original file
 
 	return written, nil
 }

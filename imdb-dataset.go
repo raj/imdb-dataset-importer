@@ -1,23 +1,27 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/raj/imdb-dataset-importer/lib"
 )
 
 // Main data for downloading from IMDB
 const (
 	MainURL             = "https://datasets.imdbws.com/"
-	NameFile            = "name.basics.tsv.gz"
-	TitleAkasFile       = "title.akas.tsv.gz"
-	TitleBasicsFile     = "title.basics.tsv.gz"
-	TitleCrewFile       = "title.crew.tsv.gz"
-	TitleEpisodeFile    = "title.episode.tsv.gz"
-	TitlePrincipalsFile = "title.principals.tsv.gz"
-	TileRatingsFile     = "title.ratings.tsv.gz"
+	NameFile            = "name.basics"
+	TitleAkasFile       = "title.akas"
+	TitleBasicsFile     = "title.basics"
+	TitleCrewFile       = "title.crew"
+	TitleEpisodeFile    = "title.episode"
+	TitlePrincipalsFile = "title.principals"
+	TileRatingsFile     = "title.ratings"
 )
 
 var (
@@ -32,50 +36,72 @@ func init() {
 }
 
 func main() {
-	fmt.Printf("Hello, world.\n")
+	fmt.Printf("Import IMDB dataset.\n")
 
-	// downloadList := make([]string, 7)
-	// downloadList[0] = MainURL + NameFile
-	// downloadList[1] = MainURL + TitleAkasFile
-	// downloadList[2] = MainURL + TitleBasicsFile
-	// downloadList[3] = MainURL + TitleCrewFile
-	// downloadList[4] = MainURL + TitleEpisodeFile
-	// downloadList[5] = MainURL + TitlePrincipalsFile
-	// downloadList[6] = MainURL + TileRatingsFile
+	downloadAction := flag.Bool("d", false, "download all files from aws dataset.")
+	importAction := flag.Bool("i", false, "import files to database.")
 
-	// TODO : use flag
-	// lib.DownloadFiles(downloadList)
+	flag.Parse()
 
-	// TODO : use flag
-	// lib.DecompressFile(NameFile)
-	// lib.DecompressFile(TitleAkasFile)
-	// lib.DecompressFile(TitleBasicsFile)
-	// lib.DecompressFile(TitleCrewFile)
-	// lib.DecompressFile(TitleEpisodeFile)
-	// lib.DecompressFile(TitlePrincipalsFile)
-	// lib.DecompressFile(TileRatingsFile)
+	if *downloadAction {
+		fmt.Printf("downloadAction\n")
+
+		downloadList := make([]string, 7)
+		extension := ".tsv.gz"
+		downloadList[0] = MainURL + NameFile + extension
+		downloadList[1] = MainURL + TitleAkasFile + extension
+		downloadList[2] = MainURL + TitleBasicsFile + extension
+		downloadList[3] = MainURL + TitleCrewFile + extension
+		downloadList[4] = MainURL + TitleEpisodeFile + extension
+		downloadList[5] = MainURL + TitlePrincipalsFile + extension
+		downloadList[6] = MainURL + TileRatingsFile + extension
+		// TODO : use flag
+		lib.DownloadFiles(os.TempDir(), downloadList)
+
+		// TODO : use flag
+		lib.DecompressFile(os.TempDir(), NameFile, extension)
+		lib.DecompressFile(os.TempDir(), TitleAkasFile, extension)
+		lib.DecompressFile(os.TempDir(), TitleBasicsFile, extension)
+		lib.DecompressFile(os.TempDir(), TitleCrewFile, extension)
+		lib.DecompressFile(os.TempDir(), TitleEpisodeFile, extension)
+		lib.DecompressFile(os.TempDir(), TitlePrincipalsFile, extension)
+		lib.DecompressFile(os.TempDir(), TileRatingsFile, extension)
+
+	}
+
+	if *importAction {
+		fmt.Printf("import Files to Database\n")
+
+		// import data to database
+		db, err := gorm.Open(dbAdapter, dbConnectionURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		lib.ImportName(filepath.Join(os.TempDir(), NameFile+".tsv"), db)
+	}
+
+	fmt.Println("tail:", flag.Args())
+	for i, arg := range flag.Args() {
+		// print index and value
+		fmt.Println("item", i, "is", arg)
+	}
 
 	// TODO :  remove gz file
 
-	// import data to database
-	db, err := gorm.Open(dbAdapter, dbConnectionURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// db.AutoMigrate(&models.Name{})
 
-	createNameTable := `CREATE TABLE public.name
-		(
-			nconst text COLLATE pg_catalog."default" NOT NULL,
-			primaryName text COLLATE pg_catalog."default",
-			birthYear text COLLATE pg_catalog."default",
-			deathYear text COLLATE pg_catalog."default",
-			primaryProfession text COLLATE pg_catalog."default",
-			knownForTitles text COLLATE pg_catalog."default"
-		)`
+	// createNameTable := `CREATE TABLE public.name
+	// 	(
+	// 		nconst text COLLATE pg_catalog."default" NOT NULL,
+	// 		primaryName text COLLATE pg_catalog."default",
+	// 		birthYear text COLLATE pg_catalog."default",
+	// 		deathYear text COLLATE pg_catalog."default",
+	// 		primaryProfession text COLLATE pg_catalog."default",
+	// 		knownForTitles text COLLATE pg_catalog."default"
+	// 	)`
 
-	db.Exec(createNameTable)
-	db.Exec("COPY name	 FROM 'E:/Projects/gopath/src/github.com/raj/imdb-dataset-importer/name.basics.tsv' DELIMITER E'\t';")
+	// db.Exec(createNameTable)
+	// db.Exec("COPY name	 FROM 'E:/Projects/gopath/src/github.com/raj/imdb-dataset-importer/name.basics.tsv' DELIMITER E'\t';")
 
 }
