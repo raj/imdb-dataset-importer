@@ -43,6 +43,7 @@ func ImportTitleRatings(filename string, dbUrl string) {
 			num_votes text COLLATE pg_catalog."default"
 		)`
 	db.Exec(createNameTable)
+	db.Exec("TRUNCATE public.title_ratings")
 
 	stmt, err := txn.Prepare(pq.CopyIn("title_ratings", "tconst", "average_rating", "num_votes"))
 	if err != nil {
@@ -143,6 +144,7 @@ func ImportTitleEpisodes(filename string, dbUrl string) {
 			episode_number int
 		)`
 	db.Exec(createNameTable)
+	db.Exec("TRUNCATE public.title_episodes")
 
 	stmt, err := txn.Prepare(pq.CopyIn("title_episodes", "tconst", "parent_tconst", "season_number", "episode_number"))
 	if err != nil {
@@ -248,6 +250,7 @@ func ImportTitlePrincipals(filename string, dbUrl string) {
 			characters text COLLATE pg_catalog."default"
 		)`
 	db.Exec(createNameTable)
+	db.Exec("TRUNCATE public.title_principals")
 
 	stmt, err := txn.Prepare(pq.CopyIn("title_principals", "tconst", "ordering", "nconst", "category", "job", "characters"))
 	if err != nil {
@@ -350,6 +353,7 @@ func ImportTitleCrew(filename string, dbUrl string) {
 			writers text COLLATE pg_catalog."default"
 		)`
 	db.Exec(createNameTable)
+	db.Exec("TRUNCATE public.title_crew")
 
 	stmt, err := txn.Prepare(pq.CopyIn("title_crew", "tconst", "directors", "writers"))
 	if err != nil {
@@ -455,6 +459,7 @@ func ImportTitleBasics(filename string, dbUrl string) {
 			genres text COLLATE pg_catalog."default"
 		)`
 	db.Exec(createNameTable)
+	db.Exec("TRUNCATE public.title_basics")
 
 	stmt, err := txn.Prepare(pq.CopyIn("title_basics", "tconst", "title_type", "primary_title", "original_title", "is_adult", "start_year", "end_year", "runtime_minutes", "genres"))
 	if err != nil {
@@ -565,6 +570,7 @@ func ImportTitleAkas(filename string, dbUrl string) {
 			is_original_title text COLLATE pg_catalog."default"
 		)`
 	db.Exec(createNameTable)
+	db.Exec("TRUNCATE public.title_akas")
 
 	stmt, err := txn.Prepare(pq.CopyIn("title_akas", "title_id", "ordering", "title", "region", "language", "types", "attributes", "is_original_title"))
 	if err != nil {
@@ -672,6 +678,7 @@ func ImportName(filename string, dbUrl string) {
 			known_for_titles text COLLATE pg_catalog."default"
 		)`
 	db.Exec(createNameTable)
+	db.Exec("TRUNCATE public.name_basics")
 
 	stmt, err := txn.Prepare(pq.CopyIn("name_basics", "nconst", "primaryname", "birth_year", "death_year", "primary_profession", "known_for_titles"))
 	if err != nil {
