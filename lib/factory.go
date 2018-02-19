@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/jinzhu/gorm"
-	"github.com/raj/imdb-dataset-importer/models"
 )
 
 type (
@@ -14,7 +13,7 @@ type (
 	}
 	// JSONView represents
 	JSONView struct {
-		Names []models.Name `json:"names"`
+		Names []string `json:"names"`
 	}
 )
 
@@ -26,7 +25,7 @@ func NewMainFactory(db *gorm.DB) *MainFactory {
 // GetMain return JSONView to send on internet
 func (mc MainFactory) GetMain() JSONView {
 
-	var names []models.Name
+	var names []string
 
 	var rawSQL = `select * from name_basics limit 1`
 

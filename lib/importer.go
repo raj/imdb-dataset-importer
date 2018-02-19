@@ -44,10 +44,10 @@ func SanityzeDb(dbUrl string) {
 	// for principals
 	fmt.Println("sanityze principals")
 	sqlScript = "CREATE INDEX ON public.title_principals (ordering);	"
-	sqlScript += "CREATE INDEX ON public.title_principals ((lower(tconst)));	"
-	sqlScript += "CREATE INDEX ON public.title_principals ((lower(nconst)));	"
-	sqlScript += "UPDATE public.title_principals SET job=null where job='N';"
-	sqlScript += "UPDATE public.title_principals SET characters=null where characters='N'"
+	// sqlScript += "CREATE INDEX ON public.title_principals ((lower(tconst)));	"
+	// sqlScript += "CREATE INDEX ON public.title_principals ((lower(nconst)));	"
+	// sqlScript += "UPDATE public.title_principals SET job=null where job='N';"
+	// sqlScript += "UPDATE public.title_principals SET characters=null where characters='N'"
 	db.Exec(sqlScript)
 
 }
@@ -73,7 +73,7 @@ func ImportTitleRatings(filename string, dbUrl string) {
 		log.Fatalf("begin: %v", err)
 	}
 
-	createNameTable := `DROP TABLE public.title_ratings;CREATE TABLE IF NOT EXISTS public.title_ratings
+	createNameTable := `DROP TABLE IF EXISTS public.title_ratings;CREATE TABLE IF NOT EXISTS public.title_ratings
 		(
 			tconst text NOT NULL,
 			average_rating numeric(3,1) ,
@@ -176,7 +176,7 @@ func ImportTitleEpisodes(filename string, dbUrl string) {
 		log.Fatalf("begin: %v", err)
 	}
 
-	createNameTable := `DROP TABLE public.title_episodes;CREATE TABLE IF NOT EXISTS public.title_episodes
+	createNameTable := `DROP TABLE IF EXISTS public.title_episodes;CREATE TABLE IF NOT EXISTS public.title_episodes
 		(
 			tconst text  NOT NULL,
 			parent_tconst text ,
@@ -280,7 +280,7 @@ func ImportTitlePrincipals(filename string, dbUrl string) {
 		log.Fatalf("begin: %v", err)
 	}
 
-	createNameTable := `DROP TABLE public.title_principals;CREATE TABLE IF NOT EXISTS public.title_principals
+	createNameTable := `DROP TABLE IF EXISTS public.title_principals;CREATE TABLE IF NOT EXISTS public.title_principals
 		(
 			tconst text  NOT NULL,
 			ordering int,
@@ -709,7 +709,7 @@ func ImportName(filename string, dbUrl string) {
 		log.Fatalf("begin: %v", err)
 	}
 
-	createNameTable := `DROP TABLE public.name_basics;CREATE TABLE IF NOT EXISTS public.name_basics
+	createNameTable := `DROP TABLE IF EXISTS public.name_basics;CREATE TABLE IF NOT EXISTS public.name_basics
 		(
 			nconst text NOT NULL,
 			primary_name text ,
