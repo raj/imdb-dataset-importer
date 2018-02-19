@@ -15,6 +15,29 @@ import (
 	"github.com/vbauerster/mpb/decor"
 )
 
+func SanityzeDb(dbUrl string) {
+
+	db, err := sql.Open("postgres", dbUrl)
+	if err != nil {
+		log.Fatalf("open: %v", err)
+	}
+	defer db.Close()
+
+	// for name_basics
+	fmt.Println("sanityze name_basics")
+	sqlScript := "update public.name_basics set death_year=NULL where death_year=0;"
+	sqlScript += "CREATE INDEX ON public.name_basics ((lower(primary_name)));	"
+	sqlScript += "CREATE INDEX ON public.name_basics ((lower(nconst)));	"
+	// db.Exec(sqlScript)
+	// for ratings
+	fmt.Println("sanityze ratings")
+	sqlScript = "CREATE INDEX ON public.title_ratings (num_votes);	"
+	sqlScript += "CREATE INDEX ON public.name_basics (average_rating);	"
+	sqlScript += "CREATE INDEX ON public.name_basics ((lower(tconst)));	"
+	db.Exec(sqlScript)
+
+}
+
 func ImportTitleRatings(filename string, dbUrl string) {
 	// tconst  averageRating   numVotes
 	f, err := os.Open(filename)
@@ -36,11 +59,11 @@ func ImportTitleRatings(filename string, dbUrl string) {
 		log.Fatalf("begin: %v", err)
 	}
 
-	createNameTable := `CREATE TABLE IF NOT EXISTS public.title_ratings
+	createNameTable := `DROP TABLE public.title_ratings;CREATE TABLE IF NOT EXISTS public.title_ratings
 		(
-			tconst text COLLATE pg_catalog."default" NOT NULL,
-			average_rating text COLLATE pg_catalog."default",
-			num_votes text COLLATE pg_catalog."default"
+			tconst text NOT NULL,
+			average_rating numeric(3,1) ,
+			num_votes int 
 		)`
 	db.Exec(createNameTable)
 	db.Exec("TRUNCATE public.title_ratings")
@@ -86,8 +109,11 @@ func ImportTitleRatings(filename string, dbUrl string) {
 		col1 := r.String()
 		col2 := r.String()
 		col3 := r.String()
+		averageRating, _ := strconv.ParseFloat(col2, 32)
+		numberOfVotes, _ := strconv.Atoi(col3)
+
 		if counter > 0 {
-			_, err = stmt.Exec(col1, col2, col3)
+			_, err = stmt.Exec(col1, averageRating, numberOfVotes)
 			if err != nil {
 				log.Fatalf("exec: %v", err)
 			}
@@ -138,8 +164,8 @@ func ImportTitleEpisodes(filename string, dbUrl string) {
 
 	createNameTable := `CREATE TABLE IF NOT EXISTS public.title_episodes
 		(
-			tconst text COLLATE pg_catalog."default" NOT NULL,
-			parent_tconst text COLLATE pg_catalog."default",
+			tconst text  NOT NULL,
+			parent_tconst text ,
 			season_number int,
 			episode_number int
 		)`
@@ -242,12 +268,12 @@ func ImportTitlePrincipals(filename string, dbUrl string) {
 
 	createNameTable := `CREATE TABLE IF NOT EXISTS public.title_principals
 		(
-			tconst text COLLATE pg_catalog."default" NOT NULL,
-			ordering text COLLATE pg_catalog."default",
-			nconst text COLLATE pg_catalog."default",
-			category text COLLATE pg_catalog."default",
-			job text COLLATE pg_catalog."default",
-			characters text COLLATE pg_catalog."default"
+			tconst text  NOT NULL,
+			ordering text ,
+			nconst text ,
+			category text ,
+			job text ,
+			characters text 
 		)`
 	db.Exec(createNameTable)
 	db.Exec("TRUNCATE public.title_principals")
@@ -348,9 +374,9 @@ func ImportTitleCrew(filename string, dbUrl string) {
 
 	createNameTable := `CREATE TABLE IF NOT EXISTS public.title_crew
 		(
-			tconst text COLLATE pg_catalog."default" NOT NULL,
-			directors text COLLATE pg_catalog."default",
-			writers text COLLATE pg_catalog."default"
+			tconst text  NOT NULL,
+			directors text ,
+			writers text 
 		)`
 	db.Exec(createNameTable)
 	db.Exec("TRUNCATE public.title_crew")
@@ -448,15 +474,15 @@ func ImportTitleBasics(filename string, dbUrl string) {
 
 	createNameTable := `CREATE TABLE IF NOT EXISTS public.title_basics
 		(
-			tconst text COLLATE pg_catalog."default" NOT NULL,
-			title_type text COLLATE pg_catalog."default",
-			primary_title text COLLATE pg_catalog."default",
-			original_title text COLLATE pg_catalog."default",
-			is_adult text COLLATE pg_catalog."default",
-			start_year text COLLATE pg_catalog."default",
-			end_year text COLLATE pg_catalog."default",
-			runtime_minutes text COLLATE pg_catalog."default",
-			genres text COLLATE pg_catalog."default"
+			tconst text  NOT NULL,
+			title_type text ,
+			primary_title text ,
+			original_title text ,
+			is_adult text ,
+			start_year text ,
+			end_year text ,
+			runtime_minutes text ,
+			genres text 
 		)`
 	db.Exec(createNameTable)
 	db.Exec("TRUNCATE public.title_basics")
@@ -560,14 +586,14 @@ func ImportTitleAkas(filename string, dbUrl string) {
 
 	createNameTable := `CREATE TABLE IF NOT EXISTS public.title_akas
 		(
-			title_id text COLLATE pg_catalog."default" NOT NULL,
-			ordering text COLLATE pg_catalog."default",
-			title text COLLATE pg_catalog."default",
-			region text COLLATE pg_catalog."default",
-			language text COLLATE pg_catalog."default",
-			types text COLLATE pg_catalog."default",
-			attributes text COLLATE pg_catalog."default",
-			is_original_title text COLLATE pg_catalog."default"
+			title_id text  NOT NULL,
+			ordering text ,
+			title text ,
+			region text ,
+			language text ,
+			types text ,
+			attributes text ,
+			is_original_title text 
 		)`
 	db.Exec(createNameTable)
 	db.Exec("TRUNCATE public.title_akas")
@@ -668,19 +694,19 @@ func ImportName(filename string, dbUrl string) {
 		log.Fatalf("begin: %v", err)
 	}
 
-	createNameTable := `CREATE TABLE IF NOT EXISTS public.name_basics
+	createNameTable := `DROP TABLE public.name_basics;CREATE TABLE IF NOT EXISTS public.name_basics
 		(
-			nconst text COLLATE pg_catalog."default" NOT NULL,
-			primaryName text COLLATE pg_catalog."default",
-			birth_year text COLLATE pg_catalog."default",
-			death_year text COLLATE pg_catalog."default",
-			primary_profession text COLLATE pg_catalog."default",
-			known_for_titles text COLLATE pg_catalog."default"
+			nconst text NOT NULL,
+			primary_name text ,
+			birth_year int ,
+			death_year int ,
+			primary_profession text ,
+			known_for_titles text 
 		)`
 	db.Exec(createNameTable)
 	db.Exec("TRUNCATE public.name_basics")
 
-	stmt, err := txn.Prepare(pq.CopyIn("name_basics", "nconst", "primaryname", "birth_year", "death_year", "primary_profession", "known_for_titles"))
+	stmt, err := txn.Prepare(pq.CopyIn("name_basics", "nconst", "primary_name", "birth_year", "death_year", "primary_profession", "known_for_titles"))
 	if err != nil {
 		log.Fatalf("prepare: %v", err)
 	}
