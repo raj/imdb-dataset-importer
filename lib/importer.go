@@ -32,8 +32,22 @@ func SanityzeDb(dbUrl string) {
 	// for ratings
 	fmt.Println("sanityze ratings")
 	sqlScript = "CREATE INDEX ON public.title_ratings (num_votes);	"
-	sqlScript += "CREATE INDEX ON public.name_basics (average_rating);	"
-	sqlScript += "CREATE INDEX ON public.name_basics ((lower(tconst)));	"
+	sqlScript += "CREATE INDEX ON public.title_ratings (average_rating);	"
+	sqlScript += "CREATE INDEX ON public.title_ratings ((lower(tconst)));	"
+	db.Exec(sqlScript)
+	// for episodes
+	fmt.Println("sanityze episodes")
+	sqlScript = "CREATE INDEX ON public.title_episodes (season_number);	"
+	sqlScript += "CREATE INDEX ON public.title_episodes ((lower(parent_tconst)));	"
+	sqlScript += "CREATE INDEX ON public.title_episodes ((lower(tconst)));	"
+	db.Exec(sqlScript)
+	// for principals
+	fmt.Println("sanityze principals")
+	sqlScript = "CREATE INDEX ON public.title_principals (ordering);	"
+	sqlScript += "CREATE INDEX ON public.title_principals ((lower(tconst)));	"
+	sqlScript += "CREATE INDEX ON public.title_principals ((lower(nconst)));	"
+	sqlScript += "UPDATE public.title_principals SET job=null where job='N';"
+	sqlScript += "UPDATE public.title_principals SET characters=null where characters='N'"
 	db.Exec(sqlScript)
 
 }
@@ -162,7 +176,7 @@ func ImportTitleEpisodes(filename string, dbUrl string) {
 		log.Fatalf("begin: %v", err)
 	}
 
-	createNameTable := `CREATE TABLE IF NOT EXISTS public.title_episodes
+	createNameTable := `DROP TABLE public.title_episodes;CREATE TABLE IF NOT EXISTS public.title_episodes
 		(
 			tconst text  NOT NULL,
 			parent_tconst text ,
@@ -266,13 +280,13 @@ func ImportTitlePrincipals(filename string, dbUrl string) {
 		log.Fatalf("begin: %v", err)
 	}
 
-	createNameTable := `CREATE TABLE IF NOT EXISTS public.title_principals
+	createNameTable := `DROP TABLE public.title_principals;CREATE TABLE IF NOT EXISTS public.title_principals
 		(
 			tconst text  NOT NULL,
-			ordering text ,
-			nconst text ,
-			category text ,
-			job text ,
+			ordering int,
+			nconst text,
+			category text,
+			job text,
 			characters text 
 		)`
 	db.Exec(createNameTable)
@@ -322,8 +336,9 @@ func ImportTitlePrincipals(filename string, dbUrl string) {
 		col4 := r.String()
 		col5 := r.String()
 		col6 := r.String()
+		ordering, _ := strconv.Atoi(col2)
 		if counter > 0 {
-			_, err = stmt.Exec(col1, col2, col3, col4, col5, col6)
+			_, err = stmt.Exec(col1, ordering, col3, col4, col5, col6)
 			if err != nil {
 				log.Fatalf("exec: %v", err)
 			}
