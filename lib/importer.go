@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/lib/pq"
 	"github.com/valyala/tsvreader"
@@ -16,7 +17,7 @@ import (
 )
 
 func SanityzeDb(dbUrl string) {
-
+	p := fmt.Println
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		log.Fatalf("open: %v", err)
@@ -24,28 +25,52 @@ func SanityzeDb(dbUrl string) {
 	defer db.Close()
 
 	// for name_basics
-	fmt.Println("sanityze name_basics")
-	sqlScript := "update public.name_basics set death_year=NULL where death_year=0;"
-	sqlScript += "CREATE INDEX ON public.name_basics ((lower(primary_name)));	"
-	sqlScript += "CREATE INDEX ON public.name_basics ((lower(nconst)));	"
-	// db.Exec(sqlScript)
+	t := time.Now()
+	p(t.Format("3:04PM"))
+	p("indexing name_basics")
+	sqlScript := `CREATE INDEX ON public.name_basics (nconst);
+		CREATE TEXT SEARCH CONFIGURATION search_conf ( COPY = english );
+		ALTER TEXT SEARCH CONFIGURATION search_conf ALTER MAPPING FOR hword, hword_part, word WITH unaccent, english_stem;
+		CREATE INDEX name_basics_primary_idx ON public.name_basics USING gin(to_tsvector('search_conf', primary_name));`
+	db.Exec(sqlScript)
 	// for ratings
-	fmt.Println("sanityze ratings")
-	sqlScript = "CREATE INDEX ON public.title_ratings (num_votes);	"
-	sqlScript += "CREATE INDEX ON public.title_ratings (average_rating);	"
-	sqlScript += "CREATE INDEX ON public.title_ratings ((lower(tconst)));	"
+	t = time.Now()
+	p(t.Format("3:04PM"))
+	p("indexing ratings")
+	sqlScript = "CREATE INDEX ON public.title_ratings (tconst);"
 	db.Exec(sqlScript)
 	// for episodes
-	fmt.Println("sanityze episodes")
-	sqlScript = "CREATE INDEX ON public.title_episodes (season_number);	"
-	sqlScript += "CREATE INDEX ON public.title_episodes ((lower(parent_tconst)));	"
-	sqlScript += "CREATE INDEX ON public.title_episodes ((lower(tconst)));	"
+	t = time.Now()
+	p(t.Format("3:04PM"))
+	p("indexing episodes")
+	sqlScript = "CREATE INDEX ON public.title_episodes (parent_tconst);"
+	sqlScript += "CREATE INDEX ON public.title_episodes (tconst);"
+	db.Exec(sqlScript)
+	// for crew
+	t = time.Now()
+	p(t.Format("3:04PM"))
+	p("indexing crew")
+	sqlScript = "CREATE INDEX ON public.title_crew (tconst);"
+	db.Exec(sqlScript)
+	// for basics
+	t = time.Now()
+	p(t.Format("3:04PM"))
+	p("indexing title_basics")
+	sqlScript = "CREATE INDEX ON public.title_basics (tconst);"
+	db.Exec(sqlScript)
+	// for akas
+	t = time.Now()
+	p(t.Format("3:04PM"))
+	p("indexing title_basics")
+	sqlScript = `CREATE INDEX ON public.title_akas (title_id);
+		CREATE INDEX akas_title_idx ON public.title_akas USING gin(to_tsvector('search_conf', title));`
 	db.Exec(sqlScript)
 	// for principals
-	fmt.Println("sanityze principals")
-	sqlScript = "CREATE INDEX ON public.title_principals (ordering);	"
-	// sqlScript += "CREATE INDEX ON public.title_principals ((lower(tconst)));	"
-	// sqlScript += "CREATE INDEX ON public.title_principals ((lower(nconst)));	"
+	t = time.Now()
+	p(t.Format("3:04PM"))
+	p("indexing principals")
+	sqlScript = "CREATE INDEX ON public.title_principals (tconst);"
+	sqlScript += "CREATE INDEX ON public.title_principals (nconst);"
 	// sqlScript += "UPDATE public.title_principals SET job=null where job='N';"
 	// sqlScript += "UPDATE public.title_principals SET characters=null where characters='N'"
 	db.Exec(sqlScript)

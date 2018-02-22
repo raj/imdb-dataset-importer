@@ -76,9 +76,9 @@ func main() {
 		fmt.Printf("import Files to Database")
 
 		lib.ImportName(filepath.Join(os.TempDir(), NameFile+".tsv"), dbConnectionURL)
-		// lib.ImportTitleAkas(filepath.Join(os.TempDir(), TitleAkasFile+".tsv"), dbConnectionURL)
-		// lib.ImportTitleBasics(filepath.Join(os.TempDir(), TitleBasicsFile+".tsv"), dbConnectionURL)
-		// lib.ImportTitleCrew(filepath.Join(os.TempDir(), TitleCrewFile+".tsv"), dbConnectionURL)
+		lib.ImportTitleAkas(filepath.Join(os.TempDir(), TitleAkasFile+".tsv"), dbConnectionURL)
+		lib.ImportTitleBasics(filepath.Join(os.TempDir(), TitleBasicsFile+".tsv"), dbConnectionURL)
+		lib.ImportTitleCrew(filepath.Join(os.TempDir(), TitleCrewFile+".tsv"), dbConnectionURL)
 		lib.ImportTitlePrincipals(filepath.Join(os.TempDir(), TitlePrincipalsFile+".tsv"), dbConnectionURL)
 		lib.ImportTitleRatings(filepath.Join(os.TempDir(), TitleRatingsFile+".tsv"), dbConnectionURL)
 		lib.ImportTitleEpisodes(filepath.Join(os.TempDir(), TitleEpisodeFile+".tsv"), dbConnectionURL)
