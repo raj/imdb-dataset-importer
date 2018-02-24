@@ -26,55 +26,49 @@ func SanityzeDb(dbUrl string) {
 
 	// for name_basics
 	t := time.Now()
-	p(t.Format("3:04PM"))
-	p("indexing name_basics")
-	sqlScript := `CREATE INDEX ON public.name_basics (nconst);
-		CREATE TEXT SEARCH CONFIGURATION search_conf ( COPY = english );
-		ALTER TEXT SEARCH CONFIGURATION search_conf ALTER MAPPING FOR hword, hword_part, word WITH unaccent, english_stem;
-		CREATE INDEX name_basics_primary_idx ON public.name_basics USING gin(to_tsvector('search_conf', primary_name));`
+	p(t.Format("3:04PM"), "create search conf on postgres")
+
+	sqlScript := "CREATE TEXT SEARCH CONFIGURATION search_conf ( COPY = english );ALTER TEXT SEARCH CONFIGURATION search_conf ALTER MAPPING FOR hword, hword_part, word WITH unaccent, english_stem;"
 	db.Exec(sqlScript)
+
+	p(t.Format("3:04PM"), "indexing name_basics nconst & primary name")
+	sqlScript = "CREATE INDEX ON public.name_basics (nconst);CREATE INDEX name_basics_primary_idx ON public.name_basics USING gin(to_tsvector('search_conf', primary_name));"
+	db.Exec(sqlScript)
+
 	// for ratings
 	t = time.Now()
-	p(t.Format("3:04PM"))
-	p("indexing ratings")
+	p(t.Format("3:04PM"), "indexing ratings tconst")
 	sqlScript = "CREATE INDEX ON public.title_ratings (tconst);"
 	db.Exec(sqlScript)
 	// for episodes
 	t = time.Now()
-	p(t.Format("3:04PM"))
-	p("indexing episodes")
+	p(t.Format("3:04PM"), "indexing episodes tconst & parent_tconst")
 	sqlScript = "CREATE INDEX ON public.title_episodes (parent_tconst);"
 	sqlScript += "CREATE INDEX ON public.title_episodes (tconst);"
 	db.Exec(sqlScript)
 	// for crew
 	t = time.Now()
-	p(t.Format("3:04PM"))
-	p("indexing crew")
+	p(t.Format("3:04PM"), "indexing crew tconst")
 	sqlScript = "CREATE INDEX ON public.title_crew (tconst);"
 	db.Exec(sqlScript)
 	// for basics
 	t = time.Now()
-	p(t.Format("3:04PM"))
-	p("indexing title_basics")
+	p(t.Format("3:04PM"), "indexing title_basics tconst")
 	sqlScript = "CREATE INDEX ON public.title_basics (tconst);"
 	db.Exec(sqlScript)
 	// for akas
 	t = time.Now()
-	p(t.Format("3:04PM"))
-	p("indexing title_basics")
+	p(t.Format("3:04PM"), "indexing title_basics title_id & title")
 	sqlScript = `CREATE INDEX ON public.title_akas (title_id);
 		CREATE INDEX akas_title_idx ON public.title_akas USING gin(to_tsvector('search_conf', title));`
 	db.Exec(sqlScript)
 	// for principals
 	t = time.Now()
-	p(t.Format("3:04PM"))
-	p("indexing principals")
+	p(t.Format("3:04PM"), "indexing principals tconst & nconst")
 	sqlScript = "CREATE INDEX ON public.title_principals (tconst);"
 	sqlScript += "CREATE INDEX ON public.title_principals (nconst);"
-	// sqlScript += "UPDATE public.title_principals SET job=null where job='N';"
-	// sqlScript += "UPDATE public.title_principals SET characters=null where characters='N'"
 	db.Exec(sqlScript)
-
+	p(t.Format("3:04PM"), "indexing finished")
 }
 
 func ImportTitleRatings(filename string, dbUrl string) {
@@ -362,6 +356,12 @@ func ImportTitlePrincipals(filename string, dbUrl string) {
 		col5 := r.String()
 		col6 := r.String()
 		ordering, _ := strconv.Atoi(col2)
+		if col5 == "N" {
+			col5 = "" // job field
+		}
+		if col6 == "N" {
+			col6 = "" // characters field
+		}
 		if counter > 0 {
 			_, err = stmt.Exec(col1, ordering, col3, col4, col5, col6)
 			if err != nil {

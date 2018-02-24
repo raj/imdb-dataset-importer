@@ -100,6 +100,7 @@ func main() {
 
 		// Get main resource
 		r.GET("/", uc.GetMain)
+		r.GET("/search_for_title/:query", uc.SearchForTitle)
 
 		http.ListenAndServe("0.0.0.0:3000", r)
 	}

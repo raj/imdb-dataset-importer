@@ -32,3 +32,15 @@ func (mc MainController) GetMain(w http.ResponseWriter, r *http.Request, p httpr
 	w.WriteHeader(200)
 	fmt.Fprintf(w, "%s", uj)
 }
+
+// SearchForTitle main data
+func (mc MainController) SearchForTitle(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	uc := NewMainFactory(mc.db)
+	query := p.ByName("query")
+	uj, _ := json.Marshal(uc.SearchForTitle(query))
+
+	// Write content-type, statuscode, payload
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	fmt.Fprintf(w, "%s", uj)
+}
