@@ -1,0 +1,24 @@
+[imdb]
+BaseURL             = "https://datasets.imdbws.com/"
+NameBasicsFile      = "name.basics"
+TitleAkasFile       = "title.akas"
+TitleBasicsFile     = "title.basics"
+TitleCrewFile       = "title.crew"
+TitleEpisodeFile    = "title.episode"
+TitlePrincipalsFile = "title.principals"
+TitleRatingsFile    = "title.ratings"
+
+[database]
+server = "127.0.0.1"
+port = 5433
+user = "postgres"
+password = "admin"
+dbname = "imdb"
+sslmode = "disable"
+
+[server]
+bind = "0.0.0.0"
+port = 3000
+
+[fs]
+tempdir = ""

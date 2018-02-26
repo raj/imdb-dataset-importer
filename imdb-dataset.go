@@ -8,33 +8,36 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/BurntSushi/toml"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/julienschmidt/httprouter"
 	"github.com/raj/imdb-dataset-importer/lib"
+	"github.com/raj/imdb-dataset-importer/models"
 )
 
 // Main data for downloading from IMDB
-const (
-	MainURL             = "https://datasets.imdbws.com/"
-	NameFile            = "name.basics"
-	TitleAkasFile       = "title.akas"
-	TitleBasicsFile     = "title.basics"
-	TitleCrewFile       = "title.crew"
-	TitleEpisodeFile    = "title.episode"
-	TitlePrincipalsFile = "title.principals"
-	TitleRatingsFile    = "title.ratings"
-)
 
 var (
 	downloadList    []string
 	dbAdapter       string
 	dbConnectionURL string
+	config          models.TomlConfig
 )
 
 func init() {
 	dbAdapter = "postgres"
-	dbConnectionURL = "host=127.0.0.1 port=5433 user=postgres dbname=imdb sslmode=disable password=admin"
+	if _, err := toml.DecodeFile("config.toml", &config); err != nil {
+		fmt.Println(err)
+		return
+	}
+	dbConnectionURL = fmt.Sprintf("host=%s port=%v user=%s dbname=%s sslmode=%s password=%s",
+		config.DB.Server,
+		config.DB.Port,
+		config.DB.User,
+		config.DB.DbName,
+		config.DB.SslMode,
+		config.DB.Password)
 }
 
 func main() {
@@ -43,45 +46,50 @@ func main() {
 	downloadAction := flag.Bool("d", false, "download all files from aws dataset.")
 	importAction := flag.Bool("i", false, "import files to database.")
 	apiAction := flag.Bool("api", false, "provide api.")
+	searchAction := flag.Bool("s", false, "search.")
 
 	flag.Parse()
+
+	if *searchAction {
+		fmt.Println("search")
+	}
 
 	if *downloadAction {
 		fmt.Printf("downloadAction\n")
 
 		downloadList := make([]string, 7)
 		extension := ".tsv.gz"
-		downloadList[0] = MainURL + NameFile + extension
-		downloadList[1] = MainURL + TitleAkasFile + extension
-		downloadList[2] = MainURL + TitleBasicsFile + extension
-		downloadList[3] = MainURL + TitleCrewFile + extension
-		downloadList[4] = MainURL + TitleEpisodeFile + extension
-		downloadList[5] = MainURL + TitlePrincipalsFile + extension
-		downloadList[6] = MainURL + TitleRatingsFile + extension
+		downloadList[0] = config.Imdb.BaseURL + config.Imdb.NameBasicsFile + extension
+		downloadList[1] = config.Imdb.BaseURL + config.Imdb.TitleAkasFile + extension
+		downloadList[2] = config.Imdb.BaseURL + config.Imdb.TitleBasicsFile + extension
+		downloadList[3] = config.Imdb.BaseURL + config.Imdb.TitleCrewFile + extension
+		downloadList[4] = config.Imdb.BaseURL + config.Imdb.TitleEpisodeFile + extension
+		downloadList[5] = config.Imdb.BaseURL + config.Imdb.TitlePrincipalsFile + extension
+		downloadList[6] = config.Imdb.BaseURL + config.Imdb.TitleRatingsFile + extension
 		// TODO : use flag
 		lib.DownloadFiles(os.TempDir(), downloadList)
 
 		// TODO : use flag
-		lib.DecompressFile(os.TempDir(), NameFile, extension)
-		lib.DecompressFile(os.TempDir(), TitleAkasFile, extension)
-		lib.DecompressFile(os.TempDir(), TitleBasicsFile, extension)
-		lib.DecompressFile(os.TempDir(), TitleCrewFile, extension)
-		lib.DecompressFile(os.TempDir(), TitleEpisodeFile, extension)
-		lib.DecompressFile(os.TempDir(), TitlePrincipalsFile, extension)
-		lib.DecompressFile(os.TempDir(), TitleRatingsFile, extension)
+		lib.DecompressFile(os.TempDir(), config.Imdb.NameBasicsFile, extension)
+		lib.DecompressFile(os.TempDir(), config.Imdb.TitleAkasFile, extension)
+		lib.DecompressFile(os.TempDir(), config.Imdb.TitleBasicsFile, extension)
+		lib.DecompressFile(os.TempDir(), config.Imdb.TitleCrewFile, extension)
+		lib.DecompressFile(os.TempDir(), config.Imdb.TitleEpisodeFile, extension)
+		lib.DecompressFile(os.TempDir(), config.Imdb.TitlePrincipalsFile, extension)
+		lib.DecompressFile(os.TempDir(), config.Imdb.TitleRatingsFile, extension)
 
 	}
 
 	if *importAction {
 		fmt.Printf("import Files to Database")
 
-		lib.ImportName(filepath.Join(os.TempDir(), NameFile+".tsv"), dbConnectionURL)
-		lib.ImportTitleAkas(filepath.Join(os.TempDir(), TitleAkasFile+".tsv"), dbConnectionURL)
-		lib.ImportTitleBasics(filepath.Join(os.TempDir(), TitleBasicsFile+".tsv"), dbConnectionURL)
-		lib.ImportTitleCrew(filepath.Join(os.TempDir(), TitleCrewFile+".tsv"), dbConnectionURL)
-		lib.ImportTitlePrincipals(filepath.Join(os.TempDir(), TitlePrincipalsFile+".tsv"), dbConnectionURL)
-		lib.ImportTitleRatings(filepath.Join(os.TempDir(), TitleRatingsFile+".tsv"), dbConnectionURL)
-		lib.ImportTitleEpisodes(filepath.Join(os.TempDir(), TitleEpisodeFile+".tsv"), dbConnectionURL)
+		lib.ImportName(filepath.Join(os.TempDir(), config.Imdb.NameBasicsFile+".tsv"), dbConnectionURL)
+		lib.ImportTitleAkas(filepath.Join(os.TempDir(), config.Imdb.TitleAkasFile+".tsv"), dbConnectionURL)
+		lib.ImportTitleBasics(filepath.Join(os.TempDir(), config.Imdb.TitleBasicsFile+".tsv"), dbConnectionURL)
+		lib.ImportTitleCrew(filepath.Join(os.TempDir(), config.Imdb.TitleCrewFile+".tsv"), dbConnectionURL)
+		lib.ImportTitlePrincipals(filepath.Join(os.TempDir(), config.Imdb.TitlePrincipalsFile+".tsv"), dbConnectionURL)
+		lib.ImportTitleRatings(filepath.Join(os.TempDir(), config.Imdb.TitleRatingsFile+".tsv"), dbConnectionURL)
+		lib.ImportTitleEpisodes(filepath.Join(os.TempDir(), config.Imdb.TitleEpisodeFile+".tsv"), dbConnectionURL)
 		lib.SanityzeDb(dbConnectionURL)
 	}
 
@@ -102,7 +110,8 @@ func main() {
 		r.GET("/", uc.GetMain)
 		r.GET("/search_for_title/:query", uc.SearchForTitle)
 
-		http.ListenAndServe("0.0.0.0:3000", r)
+		bindListen := fmt.Sprintf("%s:%v", config.ServerInfo.Bind, config.ServerInfo.Port)
+		http.ListenAndServe(bindListen, r)
 	}
 
 	fmt.Println("tail:", flag.Args())
