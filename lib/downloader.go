@@ -6,21 +6,28 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
+
 	"github.com/vbauerster/mpb"
 	"github.com/vbauerster/mpb/decor"
 )
 
-func DecompressFile(tmpDir string, name string, extension string) {
+func DecompressFiles(tmpDir string, downloadList []string) {
 
-	filepath := filepath.Join(tmpDir, name+extension)
-	handle, err := unpackGzipFile(filepath)
-	if err != nil {
-		fmt.Println("[ERROR] Unzip file:", err)
+	for _, item := range downloadList {
+		u, _ := url.Parse(item)
+		filename := strings.Trim(u.Path, "/")
+		fmt.Println("decompress file : ", filename)
+		filepath := filepath.Join(tmpDir, filename)
+		_, err := unpackGzipFile(filepath)
+		if err != nil {
+			fmt.Println("[ERROR] Unzip file:", err)
+		}
 	}
-	fmt.Println(handle)
 
 }
 
@@ -29,7 +36,7 @@ func DownloadFiles(tmpDir string, downloadList []string) {
 
 	var wg sync.WaitGroup
 	p := mpb.New(mpb.WithWaitGroup(&wg))
-	fmt.Println(p)
+	// fmt.Println(p)
 
 	for _, item := range downloadList {
 		url := item
@@ -38,7 +45,7 @@ func DownloadFiles(tmpDir string, downloadList []string) {
 	}
 
 	p.Stop()
-	fmt.Println("Finished")
+	fmt.Println("Download Finished")
 }
 
 // code from https://github.com/vbauerster/mpb/blob/master/examples/io/multiple/main.go

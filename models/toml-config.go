@@ -16,14 +16,15 @@ type databaseInfo struct {
 }
 
 type imdbInfo struct {
-	BaseURL             string
-	NameBasicsFile      string
-	TitleAkasFile       string
-	TitleBasicsFile     string
-	TitleCrewFile       string
-	TitleEpisodeFile    string
-	TitlePrincipalsFile string
-	TitleRatingsFile    string
+	BaseURL string
+	Files   []string
+	// NameBasicsFile      string
+	// TitleAkasFile       string
+	// TitleBasicsFile     string
+	// TitleCrewFile       string
+	// TitleEpisodeFile    string
+	// TitlePrincipalsFile string
+	// TitleRatingsFile    string
 }
 
 type serverInfo struct {

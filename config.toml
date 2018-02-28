@@ -1,12 +1,6 @@
 [imdb]
 BaseURL             = "https://datasets.imdbws.com/"
-NameBasicsFile      = "name.basics"
-TitleAkasFile       = "title.akas"
-TitleBasicsFile     = "title.basics"
-TitleCrewFile       = "title.crew"
-TitleEpisodeFile    = "title.episode"
-TitlePrincipalsFile = "title.principals"
-TitleRatingsFile    = "title.ratings"
+Files = ["name.basics", "title.akas", "title.basics", "title.crew", "title.episode", "title.principals", "title.ratings"]
 
 [database]
 server = "127.0.0.1"
