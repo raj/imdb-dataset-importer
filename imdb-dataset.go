@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 	"github.com/jinzhu/gorm"
@@ -54,12 +55,10 @@ func main() {
 	}
 
 	if *downloadAction {
-		fmt.Printf("downloadAction\n")
-
-		extension := ".tsv.gz"
+		log.Println("downloadAction")
 
 		for _, item := range config.Imdb.Files {
-			url := config.Imdb.BaseURL + item + extension
+			url := config.Imdb.BaseURL + item + ".tsv.gz"
 			downloadList = append(downloadList, url)
 		}
 		lib.DownloadFiles(os.TempDir(), downloadList)
@@ -68,15 +67,14 @@ func main() {
 	}
 
 	if *importAction {
-		fmt.Printf("import Files to Database")
-
-		// lib.ImportName(filepath.Join(os.TempDir(), config.Imdb.NameBasicsFile+".tsv"), dbConnectionURL)
-		// lib.ImportTitleAkas(filepath.Join(os.TempDir(), config.Imdb.TitleAkasFile+".tsv"), dbConnectionURL)
-		// lib.ImportTitleBasics(filepath.Join(os.TempDir(), config.Imdb.TitleBasicsFile+".tsv"), dbConnectionURL)
-		// lib.ImportTitleCrew(filepath.Join(os.TempDir(), config.Imdb.TitleCrewFile+".tsv"), dbConnectionURL)
-		// lib.ImportTitlePrincipals(filepath.Join(os.TempDir(), config.Imdb.TitlePrincipalsFile+".tsv"), dbConnectionURL)
-		// lib.ImportTitleRatings(filepath.Join(os.TempDir(), config.Imdb.TitleRatingsFile+".tsv"), dbConnectionURL)
-		// lib.ImportTitleEpisodes(filepath.Join(os.TempDir(), config.Imdb.TitleEpisodeFile+".tsv"), dbConnectionURL)
+		log.Println("import Files to Database")
+		lib.ImportName(filepath.Join(os.TempDir(), "name.basics.tsv"), dbConnectionURL)
+		lib.ImportTitleAkas(filepath.Join(os.TempDir(), "title.akas.tsv"), dbConnectionURL)
+		lib.ImportTitleBasics(filepath.Join(os.TempDir(), "title.basics.tsv"), dbConnectionURL)
+		lib.ImportTitleCrew(filepath.Join(os.TempDir(), "title.crew.tsv"), dbConnectionURL)
+		lib.ImportTitlePrincipals(filepath.Join(os.TempDir(), "title.episode.tsv"), dbConnectionURL)
+		lib.ImportTitleRatings(filepath.Join(os.TempDir(), "title.principals.tsv"), dbConnectionURL)
+		lib.ImportTitleEpisodes(filepath.Join(os.TempDir(), "title.ratings.tsv"), dbConnectionURL)
 		lib.SanityzeDb(dbConnectionURL)
 	}
 
