@@ -51,7 +51,8 @@ func (mc MainFactory) SearchForTitle(query string) JSONView {
 	qu = strings.Replace(qu, ":", "_", -1)
 
 	var rawSQL = `
-		 	select * from public.title_basics where tconst in (
+			select distinct(tconst),title_type,primary_title,original_title,is_adult,start_year,end_year,runtime_minutes,genres
+			from public.title_basics where tconst in (
 		 	SELECT distinct(title_id) FROM public.title_akas where to_tsvector('search_conf',title) @@ to_tsquery('search_conf', ?)
 			) order by start_year desc`
 
